@@ -18,6 +18,7 @@ class _LessonScreenState extends State<LessonScreen> {
   int _totalScore = 0;
   bool _showResult = false;
   double _progress = 0.0;
+  bool _isCurrentAnswerCorrect = false; // Added to track if current answer is correct for ProgressBar
 
   @override
   void initState() {
@@ -35,27 +36,34 @@ class _LessonScreenState extends State<LessonScreen> {
     if (_selectedAnswerIndex == null) return;
 
     final currentQuestion = widget.lesson.questions[_currentQuestionIndex];
-    final isCorrect = _selectedAnswerIndex == currentQuestion.correctIndex;
+    _isCurrentAnswerCorrect = _selectedAnswerIndex == currentQuestion.correctIndex; // Set this flag
 
     setState(() {
-      _showResult = true;
-      if (isCorrect) {
+      _showResult = true; // Show results immediately upon submission
+      if (_isCurrentAnswerCorrect) {
         _totalScore += currentQuestion.points;
+      } else {
+        // Deduct 10 points for a wrong answer, ensuring score doesn't go below 0
+        _totalScore = (_totalScore - 10).clamp(0, double.infinity).toInt();
       }
     });
 
-    Future.delayed(Duration(seconds: 1), () {
-      if (_currentQuestionIndex < widget.lesson.questions.length - 1) {
-        setState(() {
-          _currentQuestionIndex++;
-          _selectedAnswerIndex = null;
-          _showResult = false;
-          _updateProgress();
-        });
-      } else {
-        Navigator.pop(context, _totalScore);
-      }
-    });
+    // We removed the Future.delayed here because the buttons will now handle navigation.
+    // The result should be shown immediately after submission.
+  }
+
+  void _moveToNextQuestion() {
+    if (_currentQuestionIndex < widget.lesson.questions.length - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswerIndex = null;
+        _showResult = false; // Hide result view for the next question
+        _updateProgress(); // Update progress for the new question
+      });
+    } else {
+      // If it's the last question, pop the screen with the final score
+      Navigator.pop(context, _totalScore);
+    }
   }
 
   @override
@@ -115,6 +123,8 @@ class _LessonScreenState extends State<LessonScreen> {
                   progress: _progress,
                   height: 10,
                   color: Colors.blue,
+                  // Pass the correctness of the *current* submitted answer to ProgressBar
+                  isCorrectAnswer: _showResult && _isCurrentAnswerCorrect,
                 ),
               ],
             ),
@@ -144,23 +154,51 @@ class _LessonScreenState extends State<LessonScreen> {
                       itemCount: question.options.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final isCorrect = index == question.correctIndex;
-                        final isSelected = index == _selectedAnswerIndex;
-                        final showResults = _showResult && (isSelected || isCorrect);
+                        final isCorrectOption = index == question.correctIndex;
+                        final isSelectedOption = index == _selectedAnswerIndex;
+                        final showColors = _showResult; // Only show colors after submission
+
+                        Color? cardColor;
+                        Color? borderColor;
+                        Widget? suffixIcon;
+                        Color? circleColor;
+                        Widget? circleChild;
+
+                        if (showColors) {
+                          if (isCorrectOption) {
+                            cardColor = Colors.green.shade50;
+                            borderColor = Colors.green;
+                            suffixIcon = Icon(Icons.check, color: Colors.green);
+                            circleColor = Colors.green;
+                            circleChild = Icon(Icons.check, size: 16, color: Colors.white);
+                          } else if (isSelectedOption && !isCorrectOption) {
+                            cardColor = Colors.red.shade50;
+                            borderColor = Colors.red;
+                            suffixIcon = Icon(Icons.close, color: Colors.red);
+                            circleColor = Colors.red;
+                            circleChild = Icon(Icons.close, size: 16, color: Colors.white);
+                          } else {
+                            borderColor = Colors.grey.shade200;
+                            circleColor = Colors.grey.shade200;
+                          }
+                        } else {
+                          // Before submission
+                          if (isSelectedOption) {
+                            borderColor = Colors.blue.shade400;
+                            circleColor = Colors.blue.shade100;
+                          } else {
+                            borderColor = Colors.grey.shade200;
+                            circleColor = Colors.grey.shade200;
+                          }
+                        }
 
                         return Card(
                           elevation: 2,
-                          color: showResults
-                              ? isCorrect
-                                  ? Colors.green.shade50
-                                  : Colors.red.shade50
-                              : null,
+                          color: cardColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
-                              color: isSelected
-                                  ? Colors.blue.shade400
-                                  : Colors.grey.shade200,
+                              color: borderColor ?? Colors.grey.shade200, // Default if null
                               width: 1.5,
                             ),
                           ),
@@ -178,21 +216,9 @@ class _LessonScreenState extends State<LessonScreen> {
                                     height: 24,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: showResults
-                                          ? isCorrect
-                                              ? Colors.green
-                                              : Colors.red
-                                          : isSelected
-                                              ? Colors.blue.shade100
-                                              : Colors.grey.shade200,
+                                      color: circleColor,
                                     ),
-                                    child: showResults
-                                        ? Icon(
-                                            isCorrect ? Icons.check : Icons.close,
-                                            size: 16,
-                                            color: Colors.white,
-                                          )
-                                        : null,
+                                    child: circleChild,
                                   ),
                                   SizedBox(width: 16),
                                   Expanded(
@@ -201,11 +227,20 @@ class _LessonScreenState extends State<LessonScreen> {
                                       style: TextStyle(fontSize: 16),
                                     ),
                                   ),
-                                  if (showResults && isCorrect)
+                                  if (showColors && isCorrectOption)
                                     Text(
                                       '+${question.points} pts',
                                       style: TextStyle(
                                         color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  // Display -10 pts for incorrect selected answer
+                                  if (showColors && isSelectedOption && !isCorrectOption)
+                                    Text(
+                                      '-10 pts', // Display deduction for incorrect answers
+                                      style: TextStyle(
+                                        color: Colors.red,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -218,23 +253,71 @@ class _LessonScreenState extends State<LessonScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _selectedAnswerIndex == null || _showResult
-                        ? null
-                        : _submitAnswer,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  // Buttons for Submit/Next Question/Skip
+                  if (_showResult)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _moveToNextQuestion,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              _currentQuestionIndex == widget.lesson.questions.length - 1
+                                  ? 'Finish Lesson'
+                                  : 'Next Question',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _selectedAnswerIndex == null ? null : _submitAnswer,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: Colors.blue.shade600,
+                            ),
+                            child: Text(
+                              'Submit',
+                              style: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                        ),
+                        if (_selectedAnswerIndex != null) SizedBox(width: 10),
+                        if (_selectedAnswerIndex != null)
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _moveToNextQuestion, // Allow skipping directly to next question
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: Colors.grey.shade300,
+                              ),
+                              child: Text(
+                                'Skip',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    child: Text(
-                      _currentQuestionIndex == widget.lesson.questions.length - 1
-                          ? 'Finish Lesson'
-                          : 'Next Question',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
                 ],
               ),
             ),

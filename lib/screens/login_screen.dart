@@ -40,10 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-      builder: (_) => SplashScreen(
-        userName: user.displayName ?? user.email?.split('@')[0] ?? 'Learner',
-        initialScore: 75,
-      ),
+      builder: (_) => HomeScreen( ),
     ),
   );
       } else {
@@ -68,11 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-      builder: (_) => SplashScreen(
-        userName: user.displayName ?? user.email?.split('@')[0] ?? 'Learner',
-        initialScore: 75,
+      builder: (_) => HomeScreen()
       ),
-    ),
   );
 }else {
       ScaffoldMessenger.of(context).showSnackBar(
