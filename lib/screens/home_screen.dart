@@ -1,15 +1,13 @@
 // screens/home_screen.dart
-import 'package:app_prototype/widgets/lesson_card.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/avatar_widget.dart';
 import '../utils/avatar_logic.dart';
-import '../services/firestore_service.dart';
+import '../models/lesson_model.dart';
+import 'package:app_prototype/widgets/lesson_card.dart' hide LessonScreen;
+import 'lesson_screen.dart';
 import 'login_screen.dart';
 import '../main.dart';
-import 'lesson_screen.dart';
-import '../models/lesson_model.dart';
-import '../models/user_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -17,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int score = 75;
+  int _totalScore = 75; // Persistent total score starting at 75
   String emotion = "neutral";
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
@@ -26,19 +24,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    emotion = getAvatarEmotion(_totalScore);
     _loadUserData();
-    emotion = getAvatarEmotion(score);
   }
 
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final userModel = await FirestoreService().getUser(user.uid);
+      // Load any additional user data here if needed
       setState(() {
-        _userData = userModel != null ? userModel.toMap() : null;
         _isLoading = false;
       });
     }
+  }
+
+  void _logout(BuildContext context) {
+    FirebaseAuth.instance.signOut().then((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+      );
+    });
   }
 
   void _toggleTheme() {
@@ -48,129 +54,139 @@ class _HomeScreenState extends State<HomeScreen> {
     MyApp.of(context)?.toggleTheme(_isDarkMode);
   }
 
-  void _logout(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => LoginScreen()),
-    );
-  }
+  void _navigateToLesson(String subject) async {
+  final lesson = Lesson.createSampleLesson(subject);
+  
+  final lessonScore = await Navigator.push<int>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => LessonScreen(lesson: lesson), // Now unambiguous
+    ),
+  );
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Theme.of(context).colorScheme.background,
-    appBar: AppBar(
-      title: Text(_userData != null 
-          ? 'Welcome, ${_userData!['displayName'] ?? 'User'}'
-          : 'My E-Tutor'),
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: Theme.of(context).primaryColor,
-      actions: [
-        if (_userData?['photoUrl'] != null)
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: CircleAvatar(
-              backgroundImage: NetworkImage(_userData!['photoUrl']),
-              radius: 16,
+  if (lessonScore != null) {
+    setState(() {
+      _totalScore += lessonScore;
+      emotion = getAvatarEmotion(_totalScore);
+    });
+  }
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Custom Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/background.png',
+              fit: BoxFit.cover,
+              color: _isDarkMode 
+                  ? Colors.black.withOpacity(0.7)
+                  : Colors.white.withOpacity(0.5),
+              colorBlendMode: BlendMode.overlay,
             ),
           ),
-        IconButton(
-          icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
-          onPressed: _toggleTheme,
-          tooltip: 'Toggle theme',
-        ),
-        IconButton(
-          icon: Icon(Icons.logout),
-          onPressed: () => _logout(context),
-          tooltip: 'Logout',
-        ),
-      ],
-    ),
-    body: _isLoading
-        ? Center(child: CircularProgressIndicator())
-        : Column(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Your Learning Companion',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
-                      ),
-                    ),
-                    Text('Email: ${_userData?['email'] ?? ''}'),
-                    SizedBox(height: 20),
-                    Stack(
-                      alignment: Alignment.center,
+
+          // Main Content
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Avatar and Greeting Section
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Column(
                       children: [
+                        // Avatar
                         Container(
-                          width: 180,
-                          height: 180,
+                          width: 220,
+                          height: 220,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: _isDarkMode
-                                  ? [Colors.blue.shade800, Colors.purple.shade600]
-                                  : [Colors.blue.shade200, Colors.blue.shade400],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.shade100.withOpacity(_isDarkMode ? 0.2 : 0.5),
-                                blurRadius: 15,
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 20,
                                 spreadRadius: 5,
                               ),
                             ],
                           ),
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: AvatarWidget(emotion: emotion, size: 150),
+                          child: AvatarWidget(
+                            emotion: emotion,
+                            size: 200,
                           ),
                         ),
+                        SizedBox(height: 20),
+                        
+                        // Greeting
+                        Column(
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: _isDarkMode 
+                                    ? Colors.white.withOpacity(0.9)
+                                    : Colors.blue.shade900.withOpacity(0.8),
+                              ),
+                            ),
+                            Text(
+                              _userData?['displayName'] ??
+                              FirebaseAuth.instance.currentUser?.displayName ?? 
+                              'Learner',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: _isDarkMode ? Colors.white : Colors.blue.shade900,
+                              ),
+                            ),
+                             Text(
+                            'Logged in as: ${_userData?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? ''}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.6),
+                               ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Total Score: $_totalScore',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _isDarkMode ? Colors.white : Colors.blue.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        
+                        // Score Indicator
+                        _buildScoreIndicator(),
                       ],
                     ),
-                    SizedBox(height: 20),
-                    _buildScoreIndicator(),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Today\'s Lessons',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                  ),
+                  SizedBox(height: 30),
+                  
+                  // Lessons Section
+                  Container(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Your Lessons',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: _isDarkMode ? Colors.white : Colors.blue.shade900,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 20),
-                      Expanded(
-                        child: GridView.count(
+                        SizedBox(height: 20),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
                           crossAxisCount: 2,
                           crossAxisSpacing: 15,
                           mainAxisSpacing: 15,
@@ -181,40 +197,48 @@ Widget build(BuildContext context) {
                             _buildLessonCard('English', Icons.menu_book, Colors.blue),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-  );
-}
 
-  void _navigateToLesson(String subject) {
-  // You would typically fetch the lesson from Firestore here
-  final lesson = Lesson.createSampleLesson(subject);
-  
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => LessonScreen(lesson: lesson),
-    ),
-  ).then((score) {
-    if (score != null) {
-      setState(() {
-        this.score = score;
-        emotion = getAvatarEmotion(score);
-      });
-    }
-  });
-}
+          // App Bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                    color: _isDarkMode ? Colors.white : Colors.blue.shade900),
+                onPressed: _toggleTheme,
+                tooltip: 'Toggle theme',
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.logout, 
+                      color: _isDarkMode ? Colors.white : Colors.blue.shade900),
+                  onPressed: () => _logout(context),
+                  tooltip: 'Logout',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildScoreIndicator() {
     Color scoreColor;
-    if (score >= 80) {
+    if (_totalScore >= 80) {
       scoreColor = Colors.green;
-    } else if (score >= 50) {
+    } else if (_totalScore >= 50) {
       scoreColor = Colors.orange;
     } else {
       scoreColor = Colors.red;
@@ -230,16 +254,16 @@ Widget build(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            score >= 80
+            _totalScore >= 80
                 ? Icons.emoji_emotions
-                : score >= 50
+                : _totalScore >= 50
                     ? Icons.emoji_emotions_outlined
                     : Icons.sentiment_dissatisfied,
             color: scoreColor,
           ),
           SizedBox(width: 8),
           Text(
-            'Score: $score',
+            'Current Mood',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -259,9 +283,7 @@ Widget build(BuildContext context) {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(15),
-        onTap: () {
-          _navigateToLesson(subject);
-        },
+        onTap: () => _navigateToLesson(subject),
         child: Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -296,7 +318,7 @@ Widget build(BuildContext context) {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade800,
+                  color: _isDarkMode ? Colors.white : Colors.blue.shade800,
                 ),
               ),
             ],

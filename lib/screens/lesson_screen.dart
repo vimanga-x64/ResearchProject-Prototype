@@ -15,38 +15,42 @@ class LessonScreen extends StatefulWidget {
 class _LessonScreenState extends State<LessonScreen> {
   int _currentQuestionIndex = 0;
   int? _selectedAnswerIndex;
+  int _totalScore = 0;
   int _score = 0;
   bool _showResult = false;
+  double _progress = 0.0;
 
   void _submitAnswer() {
     if (_selectedAnswerIndex == null) return;
 
-    final isCorrect = _selectedAnswerIndex == 
-        widget.lesson.questions[_currentQuestionIndex].correctIndex;
+    final currentQuestion = widget.lesson.questions[_currentQuestionIndex];
+    final isCorrect = _selectedAnswerIndex == currentQuestion.correctIndex;
 
-    setState(() {
+
+      setState(() {
       _showResult = true;
-      if (isCorrect) _score += 10;
-    });
-
-    Future.delayed(Duration(seconds: 1), () {
-      if (_currentQuestionIndex < widget.lesson.questions.length - 1) {
-        setState(() {
-          _currentQuestionIndex++;
-          _selectedAnswerIndex = null;
-          _showResult = false;
-        });
-      } else {
-        // Lesson completed
-        Navigator.pop(context, _score);
+      if (isCorrect) {
+        _score += currentQuestion.points;  // Add question's points to total
       }
     });
-  }
+
+   Future.delayed(Duration(seconds: 1), () {
+    if (_currentQuestionIndex < widget.lesson.questions.length - 1) {
+      setState(() {
+        _currentQuestionIndex++;
+        _selectedAnswerIndex = null;
+        _showResult = false;
+      });
+    } else {
+      Navigator.pop(context, _score); // Return just this lesson's score
+    }
+  });
+}
 
   @override
   Widget build(BuildContext context) {
     final question = widget.lesson.questions[_currentQuestionIndex];
-    final progress = (_currentQuestionIndex / widget.lesson.questions.length);
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +58,7 @@ class _LessonScreenState extends State<LessonScreen> {
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 16),
-            child: Center(child: Text('Score: $_score')),
+            child: Center(child: Text('Score: $_totalScore', style: TextStyle(fontSize: 18))),
           ),
         ],
       ),
@@ -62,7 +66,7 @@ class _LessonScreenState extends State<LessonScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ProgressBar(progress: progress),
+            ProgressBar(progress: _progress),
             SizedBox(height: 20),
             Text(
               question.questionText,

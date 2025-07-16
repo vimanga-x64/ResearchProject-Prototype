@@ -13,24 +13,33 @@ class AvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String imagePath;
+    String assetPath;
     switch (emotion) {
       case "happy":
-        imagePath = 'assets/avatar_happy.png';
+        assetPath = 'assets/avatar_happy.png';
         break;
       case "sad":
-        imagePath = 'assets/avatar_sad.png';
+        assetPath = 'assets/avatar_sad.png';
         break;
       default:
-        imagePath = 'assets/avatar_neutral.png';
+        assetPath = 'assets/avatar_neutral.png';
     }
 
     return ClipOval(
-      child: Image.asset(
-        imagePath,
+      child: Container(
         width: size,
         height: size,
-        fit: BoxFit.cover, 
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey[200], // Optional: background color
+        ),
+        child: Image.asset(
+          assetPath,
+          width: size,
+          height: size,
+          fit: BoxFit.cover, // Ensures the image fills the circle
+          filterQuality: FilterQuality.high,
+        ),
       ),
     );
   }

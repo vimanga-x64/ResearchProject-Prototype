@@ -3,11 +3,13 @@ class Question {
   final String questionText;
   final List<String> options;
   final int correctIndex;
+  final int points;
 
   Question({
     required this.questionText,
     required this.options,
     required this.correctIndex,
+    this.points = 10, // Default points for each question
   });
 }
 

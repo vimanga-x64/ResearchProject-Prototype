@@ -63,6 +63,8 @@ flutter:
     - assets/avatar_neutral.png
     - assets/avatar_happy.png
     - assets/avatar_sad.png
+    - assets/custom_icon.png
+    - assets/background.png
     
 
   # The following line ensures that the Material Icons font is

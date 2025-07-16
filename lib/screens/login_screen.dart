@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
+import 'splash_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter both email and password')),
+        SnackBar(content: Text('Please enter an email address and a password')),
       );
       return;
     }
@@ -36,14 +37,15 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (user != null) {
-        // Get additional user data from Firestore
-        final userData = await _firestoreService.getUser(user.uid);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HomeScreen(),
-          ),
-        );
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+      builder: (_) => SplashScreen(
+        userName: user.displayName ?? user.email?.split('@')[0] ?? 'Learner',
+        initialScore: 75,
+      ),
+    ),
+  );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: Invalid credentials')),
@@ -63,11 +65,16 @@ class _LoginScreenState extends State<LoginScreen> {
   try {
     final user = await socialLoginFunction();
     if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
-      );
-    } else {
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SplashScreen(
+        userName: user.displayName ?? user.email?.split('@')[0] ?? 'Learner',
+        initialScore: 75,
+      ),
+    ),
+  );
+}else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed. Please try again.')),
       );
@@ -84,34 +91,66 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blue.shade700, Colors.purple.shade500],
+      body:  Stack(
+        children: [
+        Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.blue.shade700, Colors.yellow.shade500],
+              ),
+            ),
           ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Colors.white,
+         // Blended Image Overlay (Top Half)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: ShaderMask(
+              shaderCallback: (rect) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black,
+                    Colors.black.withOpacity(0.8),
+                    Colors.transparent
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
+              },
+              blendMode: BlendMode.dstIn,
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  Colors.blue.shade800.withOpacity(0.6),
+                  BlendMode.multiply,
                 ),
-                SizedBox(height: 20),
-                Text(
-                  'E-Tutor Avatar Prototype',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                child: Image.asset(
+                  'assets/custom_icon.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+
+          // Login Content
+          Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+                  Text(
+                    'E-Tutor Avatar Prototype',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
                 SizedBox(height: 40),
                 _buildTextField(
                   controller: _emailController,
@@ -175,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+        ],
       ),
     );
   }
