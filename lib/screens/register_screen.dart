@@ -4,7 +4,9 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart'; // Still needed as SplashScreen might route here
 import 'package:firebase_auth/firebase_auth.dart';
-import 'splash_screen.dart'; // Ensure this import is correct based on your project structure
+import 'splash_screen.dart';
+import 'package:lottie/lottie.dart';
+import '../main.dart'; 
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -19,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService(); // Assuming you have an AuthService class
   bool _isLoading = false;
+   bool _isDarkMode = false;
 
   void _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -78,22 +81,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+    @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setState(() {
+      _isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/background.png', // Ensure this path is correct
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Optional: A semi-transparent overlay for better text readability
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.5), // Adjust opacity as needed
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: _isDarkMode
+                    ? [Colors.black.withOpacity(0.9), Colors.blueGrey.shade900, Colors.black.withOpacity(0.9)]
+                    : [Colors.blue.shade900, Colors.blue.shade400, Colors.blue.shade900],
+                stops: [0.0, 0.5, 1.0],
+              ),
             ),
           ),
           // Main content
@@ -105,13 +117,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // App Logo/Icon (Optional)
-                    Icon(
-                      Icons.school, // Example icon, replace with your app logo
-                      size: 80,
-                      color: Colors.white,
+                    
+                    Lottie.asset(
+                      'assets/animations/register.json', // Your Lottie file path
+                      height: 250, // Adjust size as needed
+                      width: 250,  // Adjust size as needed
+                      fit: BoxFit.contain,
+                      repeat: true,
                     ),
-                    const SizedBox(height: 20),
+
                     Text(
                       'Create Your Account',
                       style: TextStyle(

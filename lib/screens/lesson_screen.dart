@@ -43,8 +43,7 @@ class _LessonScreenState extends State<LessonScreen> {
       if (_isCurrentAnswerCorrect) {
         _totalScore += currentQuestion.points;
       } else {
-        // Deduct 10 points for a wrong answer, ensuring score doesn't go below 0
-        _totalScore = (_totalScore - 10).clamp(0, double.infinity).toInt();
+         _totalScore -= currentQuestion.points;
       }
     });
   }

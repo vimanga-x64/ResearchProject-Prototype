@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 import 'splash_screen.dart';
+import 'package:lottie/lottie.dart';
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -20,6 +22,30 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
   final _firestoreService = FirestoreService();
   bool _isLoading = false;
+  bool _isDarkMode = false;
+  double _contentOpacity = 0.0; 
+
+   @override
+  void initState() {
+    super.initState();
+    // Start the fade-in animation after a short delay
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) { // Check if the widget is still in the tree
+        setState(() {
+          _contentOpacity = 1.0;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    setState(() {
+      _isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    });
+  }
+ 
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -82,53 +108,33 @@ class _LoginScreenState extends State<LoginScreen> {
   }
  }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:  Stack(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true, // Crucial for background to go behind appbar
+      body: Stack( // Use Stack to layer background behind content
         children: [
-        Container(
+          // 1. The Background Layer (now only with gradient)
+          Container(
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.blue.shade700, Colors.yellow.shade500],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                // Adjust colors based on theme
+                colors: _isDarkMode
+                    ? [Colors.black.withOpacity(0.9), Colors.blueGrey.shade900, Colors.black.withOpacity(0.9)]
+                    : [Colors.blue.shade900, Colors.blue.shade400, Colors.blue.shade900],
+                stops: [0.0, 0.5, 1.0], // Top, Middle, Bottom
               ),
             ),
+            // Removed the Center and Opacity holding the Image.asset
           ),
-         // Blended Image Overlay (Top Half)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: ShaderMask(
-              shaderCallback: (rect) {
-                return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black,
-                    Colors.black.withOpacity(0.8),
-                    Colors.transparent
-                  ],
-                  stops: [0.0, 0.5, 1.0],
-                ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
-              },
-              blendMode: BlendMode.dstIn,
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(
-                  Colors.blue.shade800.withOpacity(0.6),
-                  BlendMode.multiply,
-                ),
-                child: Image.asset(
-                  'assets/custom_icon.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-
           // Login Content
           Center(
             child: SingleChildScrollView(
@@ -136,7 +142,18 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+
+                  Lottie.asset(
+                    'assets/animations/humans.json', // Your Lottie file path
+                    height: 200, // Adjust size as needed
+                    width: 200,  // Adjust size as needed
+                    fit: BoxFit.contain,
+                    repeat: true, // Set to true if you want it to loop
+                  ),
+                  //const SizedBox(height: 5), // Space between avatar and title
+
+                
+                  //SizedBox(height: MediaQuery.of(context).size.height * 0.2),
                   Text(
                     'E-Tutor Avatar Prototype',
                     style: TextStyle(
