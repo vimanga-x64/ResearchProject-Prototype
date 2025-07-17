@@ -1,5 +1,6 @@
 // widgets/avatar_widget.dart
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class AvatarWidget extends StatelessWidget {
   final String emotion;
@@ -16,13 +17,13 @@ class AvatarWidget extends StatelessWidget {
     String assetPath;
     switch (emotion) {
       case "happy":
-        assetPath = 'assets/avatar_happy.png';
+        assetPath = 'assets/animations/happy_avatar.json';
         break;
       case "sad":
-        assetPath = 'assets/avatar_sad.png';
+        assetPath = 'assets/animations/sad_avatar.json';
         break;
       default:
-        assetPath = 'assets/avatar_neutral.png';
+        assetPath = 'assets/animations/neutral_avatar.json';
     }
 
     return ClipOval(
@@ -33,13 +34,14 @@ class AvatarWidget extends StatelessWidget {
           shape: BoxShape.circle,
           color: Colors.grey[200], // Optional: background color
         ),
-        child: Image.asset(
-          assetPath,
-          width: size,
-          height: size,
-          fit: BoxFit.cover, // Ensures the image fills the circle
-          filterQuality: FilterQuality.high,
-        ),
+        child: Lottie.asset(
+        assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain, // Adjust fit as necessary for your animation files
+        repeat: true, // Set to true if you want the animation to loop
+        // Add other Lottie properties like animate, frameRate, etc., if needed
+      ),
       ),
     );
   }

@@ -44,6 +44,8 @@ dependencies:
   animations: ^2.0.7
   hsluv: ^1.1.3
   lottie: ^3.1.0
+  shared_preferences: ^2.2.2 
+  table_calendar: ^3.0.9
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,16 @@ flutter:
     - assets/animations/humans.json
     - assets/register_background.png
     - assets/animations/register.json
+    - assets/animations/english.json
+    - assets/animations/math.json
+    - assets/animations/science.json
+    - assets/animations/history.json
+    - assets/animations/happy_avatar.json
+    - assets/animations/sad_avatar.json
+    - assets/animations/neutral_avatar.json
+    - assets/tutor1.jpg
+    - assets/tutor2.jpg
+    - assets/tutor3.jpg
     
 
   # The following line ensures that the Material Icons font is

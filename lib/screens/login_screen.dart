@@ -10,6 +10,8 @@ import 'register_screen.dart';
 import 'splash_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/gradient_background.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -28,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
    @override
   void initState() {
     super.initState();
+    _loadCurrentTheme();
     // Start the fade-in animation after a short delay
     Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) { // Check if the widget is still in the tree
@@ -38,12 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  @override
+ @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    setState(() {
-      _isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    });
+    // Update to get theme from MyApp
+    final appState = MyApp.of(context);
+    if (appState != null) {
+      setState(() {
+        _isDarkMode = appState.currentThemeMode == ThemeMode.dark;
+      });
+    }
   }
  
 
@@ -83,6 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+   Future<void> _loadCurrentTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    });
+  }
+
   Future<void> _socialLogin(Future<User?> Function() socialLoginFunction) async {
   setState(() => _isLoading = true);
   try {
@@ -115,28 +129,9 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      extendBodyBehindAppBar: true, // Crucial for background to go behind appbar
-      body: Stack( // Use Stack to layer background behind content
-        children: [
-          // 1. The Background Layer (now only with gradient)
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                // Adjust colors based on theme
-                colors: _isDarkMode
-                    ? [Colors.black.withOpacity(0.9), Colors.blueGrey.shade900, Colors.black.withOpacity(0.9)]
-                    : [Colors.blue.shade900, Colors.blue.shade400, Colors.blue.shade900],
-                stops: [0.0, 0.5, 1.0], // Top, Middle, Bottom
-              ),
-            ),
-            // Removed the Center and Opacity holding the Image.asset
-          ),
-          // Login Content
-          Center(
+      extendBodyBehindAppBar: true,
+      body: GradientBackground( // Use Stack to layer background behind content
+        child: Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(24),
               child: Column(
@@ -154,12 +149,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 
                   //SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                  Text(
+                 Text(
                     'E-Tutor Avatar Prototype',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: _isDarkMode ? Colors.white : Colors.black, // Dynamic color
                     ),
                   ),
                 SizedBox(height: 40),
@@ -183,7 +178,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   isPrimary: true,
                 ),
                 SizedBox(height: 20),
-                Text('Or continue with', style: TextStyle(color: Colors.white70)),
+                Text(
+                    'Or continue with', 
+                    style: TextStyle(color: _isDarkMode ? Colors.white70 : Colors.black54)
+                  ),
                 SizedBox(height: 20),
 
                 // Social Login Buttons Row
@@ -218,64 +216,68 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Text(
                     'Don\'t have an account? Register',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.blue.shade900),
                   ),
                 ),
               ],
-            ),
+            
           ),
         ),
-        ],
+      ),
       ),
     );
   }
 
   Widget _buildSocialButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return IconButton(
-      icon: FaIcon(icon, size: 24, color: color),
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.white54, width: 1),
-        ),
-        backgroundColor: Colors.white.withOpacity(0.1),
-        padding: EdgeInsets.all(15),
+  required IconData icon,
+  required Color color,
+  required VoidCallback onPressed,
+}) {
+  return IconButton(
+    icon: FaIcon(icon, size: 24, color: _isDarkMode ? color : Colors.blue.shade700),
+    onPressed: onPressed,
+    style: IconButton.styleFrom(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: _isDarkMode ? Colors.white54 : Colors.blue.shade700, 
+          width: 1),
       ),
-    );
-  }
+      backgroundColor: _isDarkMode 
+          ? Colors.white.withOpacity(0.1) 
+          : Colors.blue.shade50,
+      padding: EdgeInsets.all(15),
+    ),
+  );
+}
 
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      style: TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
-        prefixIcon: Icon(icon, color: Colors.white70),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white54),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+  required TextEditingController controller,
+  required String label,
+  required IconData icon,
+  bool obscureText = false,
+}) {
+  return TextField(
+    controller: controller,
+    obscureText: obscureText,
+    style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black87),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: _isDarkMode ? Colors.white70 : Colors.black54),
+      prefixIcon: Icon(icon, color: _isDarkMode ? Colors.white70 : Colors.black54),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: _isDarkMode ? Colors.white54 : Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(10),
       ),
-    );
-  }
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: _isDarkMode ? Colors.white : Colors.blue.shade700),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      filled: true,
+      fillColor: _isDarkMode ? Colors.grey.shade900 : Colors.grey.shade100,
+    ),
+  );
+}
 
   Widget _buildActionButton({
     required VoidCallback onPressed,
@@ -288,14 +290,14 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? Colors.white : Colors.transparent,
-          foregroundColor: isPrimary ? Colors.blue.shade700 : Colors.white,
+          backgroundColor: isPrimary ? (_isDarkMode ? Colors.blue.shade700 : Colors.blue.shade600)  : Colors.transparent,
+          foregroundColor: isPrimary ? Colors.white : (_isDarkMode ? Colors.white : Colors.blue.shade700),
           padding: EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: isPrimary
                 ? BorderSide.none
-                : BorderSide(color: Colors.white, width: 1),
+                : BorderSide(color: _isDarkMode ? Colors.white54 : Colors.blue.shade700, width: 1),
           ),
           elevation: isPrimary ? 4 : 0,
         ),
@@ -305,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: isPrimary ? Colors.blue.shade700 : Colors.white,
+                  color: Colors.white,
                 ),
               )
             : Text(
