@@ -393,23 +393,7 @@ void didChangeDependencies() {
     });
   }
 }
-
-_pages = [
-  Builder(builder: (context) => _buildMainHomeScreenContent(context)),
-  UserAccountScreen(),
-  CalendarScreen(),
-  PersonalTutorsScreen(),
-  SettingsScreen(
-    isDarkMode: _isDarkMode,
-    onThemeChanged: (value) async {
-      setState(() => _isDarkMode = value);
-      await MyApp.of(context)?.toggleTheme(value);
-      // Force rebuild of the current screen
-      setState(() {});
-    },
-  ),
-];
-  }
+}
 
  Widget _buildMainHomeScreenContent(BuildContext context) {
   return Container(
@@ -682,6 +666,24 @@ void _logout(BuildContext context) {
 
   @override
   Widget build(BuildContext context) {
+    // Define _pages directly in the build method or as a getter
+    // This ensures _buildMainHomeScreenContent is rebuilt when _totalScore or _isDarkMode changes.
+    final List<Widget> _pages = [
+      _buildMainHomeScreenContent(context), // This will now rebuild
+      UserAccountScreen(),
+      CalendarScreen(),
+      PersonalTutorsScreen(),
+      SettingsScreen(
+        isDarkMode: _isDarkMode,
+        onThemeChanged: (value) async {
+          setState(() => _isDarkMode = value);
+          await MyApp.of(context)?.toggleTheme(value);
+          // No need to force rebuild here specifically for _totalScore
+          // as _buildMainHomeScreenContent will react to _isDarkMode change
+        },
+      ),
+    ];
+
     return Scaffold(
       extendBodyBehindAppBar: true, // Allow body to extend behind transparent app bar
       appBar: _currentIndex == 0 ? AppBar( // Only show app bar on the main home screen
