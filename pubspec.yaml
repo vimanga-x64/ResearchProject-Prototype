@@ -85,6 +85,8 @@ flutter:
     - assets/tutor1.jpg
     - assets/tutor2.jpg
     - assets/tutor3.jpg
+    - assets/animations/success.json
+    - assets/animations/error.json
     
 
   # The following line ensures that the Material Icons font is
