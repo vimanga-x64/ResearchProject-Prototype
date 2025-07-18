@@ -4,12 +4,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:app_prototype/services/firestore_service.dart'; // Import FirestoreService
-import 'package:app_prototype/models/user_model.dart'; // Import UserModel
+import 'package:app_prototype/services/firestore_service.dart';
+import 'package:app_prototype/models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirestoreService _firestoreService = FirestoreService();
 
   // Email login
   Future<User?> signIn(String email, String password) async {
@@ -63,66 +64,62 @@ class AuthService {
     }
   }
 
-  // Microsoft Sign-In (Requires additional setup in Firebase)
+  // Microsoft Sign-In
   Future<User?> signInWithMicrosoft() async {
-  try {
-    // Create a new provider
-    final oauthProvider = OAuthProvider('microsoft.com');
-    
-    // Set scopes if needed
-    oauthProvider.setScopes([
-      'openid',
-      'email',
-      'profile',
-    ]);
-    
-    // Sign in
-    UserCredential result = await _auth.signInWithProvider(oauthProvider);
-    return result.user;
-  } catch (e) {
-    print('Microsoft login error: $e');
-    return null;
-   }
- } 
-
-  Future<User?> register(String email, String password, String name) async {
     try {
-      // 1. Create user in Firebase Auth
-      UserCredential authResult = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // 2. Save user data to Firestore
-      await _firestore.collection('users').doc(authResult.user!.uid).set({
-        'uid': authResult.user!.uid,
-        'email': email,
-        'displayName': name,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // 3. Update display name in Auth (optional)
-      await authResult.user?.updateProfile(displayName: name);
-      await authResult.user?.reload();
-
-      return authResult.user;
+      final oauthProvider = OAuthProvider('microsoft.com');
+      oauthProvider.setScopes(['openid', 'email', 'profile']);
+      UserCredential result = await _auth.signInWithProvider(oauthProvider);
+      return result.user;
     } catch (e) {
-      print("Registration error: $e");
+      print('Microsoft login error: $e');
       return null;
     }
+  } 
+
+ Future<User?> register(String email, String password, String name) async {
+  try {
+    UserCredential authResult = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    // Create user with initial score of 75
+    await _firestoreService.createUser(UserModel(
+      uid: authResult.user!.uid,
+      email: email,
+      displayName: name,
+      score: 75,  // New users start with 75 points
+      createdAt: DateTime.now(),
+    ));
+
+    await authResult.user?.updateProfile(displayName: name);
+    await authResult.user?.reload();
+
+    return authResult.user;
+  } catch (e) {
+    print("Registration error: $e");
+    return null;
+  }
+}
+
+  // Get current user's data including score
+  Future<UserModel?> getCurrentUserData() async {
+    if (_auth.currentUser == null) return null;
+    return await _firestoreService.getUser(_auth.currentUser!.uid);
   }
 
-  // Get current user's data from Firestore
-  Future<Map<String, dynamic>?> getUserData(String uid) async {
-    DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
-    return doc.data() as Map<String, dynamic>?;
+  // Update user score in Firestore
+  Future<void> updateUserScore(int score) async {
+    if (_auth.currentUser == null) return;
+    await _firestore.collection('users').doc(_auth.currentUser!.uid).update({
+      'score': score,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
   }
 
-
-  // Sign out
+  // Sign out with score saving
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
-  
 }

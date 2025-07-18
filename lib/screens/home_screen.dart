@@ -11,6 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lottie/lottie.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 
 class UserAccountScreen extends StatelessWidget {
   @override
@@ -368,7 +371,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _totalScore = 75; // Persistent total score starting at 75
+
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+  int _totalScore = 0; // Persistent total score starting at 75
   String emotion = "neutral";
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
@@ -380,6 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _totalScore = 75;
     emotion = getAvatarEmotion(_totalScore);
     _loadUserData();
 
@@ -515,61 +522,51 @@ void didChangeDependencies() {
   );
 }
 
-  Future<void> _loadUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      // Load any additional user data here if needed
-      setState(() {
-        _isLoading = false;
-      });
-    }
+Future<void> _loadUserData() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final userData = await _firestoreService.getUser(user.uid);
+    setState(() {
+      _totalScore = userData?.score ?? 75; // Default to 75 if no score exists
+      emotion = getAvatarEmotion(_totalScore);
+      _isLoading = false;
+    });
   }
+}
 
-void _logout(BuildContext context) {
-  FirebaseAuth.instance.signOut().then((_) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => LoginScreen()),
-      (route) => false, // This removes all previous routes
-    );
-  });
+void _logout(BuildContext context) async {
+  await _authService.updateUserScore(_totalScore);
+  await _authService.signOut();
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => LoginScreen()),
+    (route) => false,
+  );
 }
 
 
-  void _navigateToLesson(String subject) async {
-    print('Navigating to lesson for subject: $subject');
-    final lesson = Lesson.createSampleLesson(subject); 
+void _navigateToLesson(String subject) async {
+  final lesson = Lesson.createSampleLesson(subject);
   
-    final int? lessonScore = await Navigator.push<int>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LessonScreen(lesson: lesson), 
+  final int? lessonScore = await Navigator.push<int>(
+    context,
+    MaterialPageRoute(builder: (_) => LessonScreen(lesson: lesson)),
+  );
+
+  if (lessonScore != null && mounted) {
+    setState(() {
+      _totalScore += lessonScore;
+      emotion = getAvatarEmotion(_totalScore);
+    });
+    await _authService.updateUserScore(_totalScore);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Lesson "$subject" completed! You gained: $lessonScore points.'),
+        duration: Duration(seconds: 3),
       ),
     );
-
-    if (lessonScore != null) {
-      print('Lesson completed, returned score: $lessonScore');
-      // Schedule the setState to run after the current frame is built
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) { // Check if the widget is still mounted
-          setState(() {
-            print('Updating score with setState (via addPostFrameCallback)...');
-            _totalScore += lessonScore; 
-            emotion = getAvatarEmotion(_totalScore); 
-            print('Score updated in state to: $_totalScore');
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lesson "$subject" completed! You gained: $lessonScore points. Your total score is now: $_totalScore'), 
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      });
-    } else {
-      print('Lesson completed without returning a score (e.g., navigated back)');
-    }
   }
+}
 
   Widget _buildScoreIndicator() {
     Color scoreColor;

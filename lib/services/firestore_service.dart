@@ -20,7 +20,24 @@ class FirestoreService {
 
   Future<void> createUser(UserModel user) async {
     try {
-      await _firestore.collection('users').doc(user.uid).set(user.toMap());
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName,
+        'score': user.score,
+        'createdAt': user.createdAt,
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  Future<void> updateUserScore(String uid, int score) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'score': score,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
       print(e.toString());
     }
