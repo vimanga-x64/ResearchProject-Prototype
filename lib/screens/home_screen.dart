@@ -14,6 +14,9 @@ import 'package:lottie/lottie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
+import 'package:countup/countup.dart';
+import 'package:flutter/services.dart';
+
 
 class UserAccountScreen extends StatelessWidget {
   @override
@@ -21,7 +24,21 @@ class UserAccountScreen extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
+    return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          isDarkMode ? Colors.blueGrey.shade900 : Colors.orange.shade100,
+          isDarkMode ? Colors.grey.shade900 : Colors.white,
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 0.5],
+      ),
+    ),
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -94,6 +111,7 @@ class UserAccountScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -139,7 +157,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          widget.isDarkMode ? Colors.blueGrey.shade900 : Colors.orange.shade100,
+          widget.isDarkMode ? Colors.grey.shade900 : Colors.white,
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 0.5],
+      ),
+    ),
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Settings'),
       ),
@@ -160,6 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -176,7 +209,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          isDarkMode ? Colors.blueGrey.shade900 : Colors.orange.shade100,
+          isDarkMode ? Colors.grey.shade900 : Colors.white,
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 0.5],
+      ),
+    ),
+    child: Scaffold(
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Container(
@@ -235,6 +282,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -306,60 +354,79 @@ class PersonalTutorsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Your Tutors'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isDarkMode ? Colors.blueGrey.shade900 : Colors.orange.shade100,
+            isDarkMode ? Colors.grey.shade900 : Colors.white,
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.5, 0.5],
+        ),
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: tutors.length,
-        itemBuilder: (context, index) {
-          final tutor = tutors[index];
-          return Card(
-            margin: EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              contentPadding: EdgeInsets.all(16),
-              leading: CircleAvatar(
-                radius: 30,
-                backgroundImage: AssetImage(tutor['image']),
-              ),
-              title: Text(
-                tutor['name'],
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text('Your Tutors'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        body: ListView.builder(
+          padding: EdgeInsets.all(16),
+          itemCount: tutors.length,
+          itemBuilder: (context, index) {
+            final tutor = tutors[index];
+            return Card(
+              margin: EdgeInsets.only(bottom: 16),
+              child: ListTile(
+                contentPadding: EdgeInsets.all(16),
+                leading: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: AssetImage(tutor['image']),
+                ),
+                title: Text(
+                  tutor['name'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(tutor['subject']),
+                    SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.star, color: Colors.amber, size: 16),
+                        Text(tutor['rating'].toString()),
+                      ],
+                    ),
+                  ],
+                ),
+                trailing: ElevatedButton(
+                  onPressed: () {},
+                  child: Text('Schedule'),
                 ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(tutor['subject']),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 16),
-                      Text(tutor['rating'].toString()),
-                    ],
-                  ),
-                ],
-              ),
-              trailing: ElevatedButton(
-                onPressed: () {},
-                child: Text('Schedule'),
-              ),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: Icon(Icons.add),
-        tooltip: 'Find New Tutor',
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {},
+          child: Icon(Icons.add),
+          tooltip: 'Find New Tutor',
+        ),
       ),
     );
   }
@@ -403,8 +470,19 @@ void didChangeDependencies() {
 }
 
  Widget _buildMainHomeScreenContent(BuildContext context) {
-  return Container(
-    color: _isDarkMode ? Colors.black : Colors.white, // Solid background color
+return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          _isDarkMode ? Colors.blueGrey.shade900 : Colors.orange.shade100,
+          _isDarkMode ? Colors.grey.shade900 : Colors.white,
+          Colors.transparent,
+        ],
+        stops: [0.0, 0.5, 0.5], // This creates a hard stop at 50%
+      ),
+    ),
     child: SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -416,8 +494,9 @@ void didChangeDependencies() {
                 children: [
                   // Avatar
                   Container(
-                    width: 220,
-                    height: 220,
+                    width: 250,
+                    height: 250,
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -430,7 +509,9 @@ void didChangeDependencies() {
                     ),
                     child: AvatarWidget(
                       emotion: emotion,
-                      size: 200,
+                      size: 250,
+                      borderColor: _isDarkMode ? Colors.blue.shade200 : Colors.blue.shade800,
+                      borderWidth: 4,
                     ),
                   ),
                   SizedBox(height: 20),
@@ -457,14 +538,6 @@ void didChangeDependencies() {
                           color: _isDarkMode ? Colors.white : Colors.blue.shade900,
                         ),
                       ),
-                      Text(
-                        'Logged in as: ${_userData?['email'] ?? FirebaseAuth.instance.currentUser?.email ?? ''}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.6),
-                        ),
-                      ),
-                      SizedBox(height: 4),
                       Text(
                         'Total Score: $_totalScore',
                         style: TextStyle(
@@ -545,6 +618,42 @@ void _logout(BuildContext context) async {
 }
 
 
+void _showHelp() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Help Center'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('How to use this app:'),
+          SizedBox(height: 10),
+          Text('• Tap lessons to start learning'),
+          Text('• Track progress in your profile'),
+          Text('• Contact support if needed'),
+          SizedBox(height: 15),
+          Text('For more help:'),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Add email launch code if desired
+            },
+            child: Text('support@test.com'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+
 void _navigateToLesson(String subject) async {
   final lesson = Lesson.createSampleLesson(subject);
   
@@ -609,34 +718,85 @@ void _navigateToLesson(String subject) async {
     );
   }
 
-  Widget _buildLessonCard(String subject, String animationPath, Color color) {
+  
+
+Widget _buildLessonCard(String subject, String animationPath, Color baseColor) {
+  // Define gradients for each subject
+  final Gradient gradient;
+  switch (subject.toLowerCase()) {
+    case 'math':
+      gradient = LinearGradient(
+        colors: [
+          baseColor.withOpacity(0.8),
+          Colors.orange.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      break;
+    case 'science':
+      gradient = LinearGradient(
+        colors: [
+          baseColor.withOpacity(0.8),
+          Colors.green.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      break;
+    case 'history':
+      gradient = LinearGradient(
+        colors: [
+          baseColor.withOpacity(0.8),
+          Colors.purple.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      break;
+    case 'english':
+      gradient = LinearGradient(
+        colors: [
+          baseColor.withOpacity(0.8),
+          Colors.blue.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+      break;
+    default:
+      gradient = LinearGradient(
+        colors: [
+          baseColor.withOpacity(0.8),
+          Colors.teal.shade600,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+  }
+
   return Card(
     elevation: 4,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(15),
     ),
-    color: _isDarkMode ? Colors.grey.shade800 : Colors.white, // Card background
     child: InkWell(
       borderRadius: BorderRadius.circular(15),
       onTap: () => _navigateToLesson(subject),
       child: Container(
         padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          gradient: gradient,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(_isDarkMode ? 0.2 : 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Lottie.asset(
-                animationPath,
-                width: 80, 
-                height: 80, 
-                fit: BoxFit.contain,
-                repeat: true, // Loop the animation
-              ),
+            Lottie.asset(
+              animationPath,
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
             ),
             SizedBox(height: 10),
             Text(
@@ -644,7 +804,7 @@ void _navigateToLesson(String subject) async {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: _isDarkMode ? Colors.white : Colors.blue.shade800,
+                color: Colors.white,
               ),
             ),
           ],
@@ -653,13 +813,60 @@ void _navigateToLesson(String subject) async {
     ),
   );
 }
-
   // Method to handle BottomNavigationBar item taps
   void _onItemTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
+
+  void _showNotifications() {
+  // Implement your notifications dialog/screen
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Notifications'),
+      content: Text('You have no new notifications'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+  void _confirmSignOut() {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Sign Out'),
+      content: Text('Are you sure you want to sign out?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            await _authService.signOut();
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => LoginScreen()),
+              (route) => false,
+            );
+          },
+          child: Text(
+            'Sign Out',
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -681,53 +888,147 @@ void _navigateToLesson(String subject) async {
       ),
     ];
 
-    return Scaffold(
-      extendBodyBehindAppBar: true, // Allow body to extend behind transparent app bar
-      appBar: _currentIndex == 0 ? AppBar( // Only show app bar on the main home screen
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout,
-                color: _isDarkMode ? Colors.white : Colors.blue.shade900),
-            onPressed: () => _logout(context),
-            tooltip: 'Logout',
-          ),
-        ],
-      ) : null, // No app bar for other screens
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
+   return Scaffold(
+  extendBodyBehindAppBar: true,
+  appBar: _currentIndex == 0 
+    ? AppBar(
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  title: Text('App_Prototype'), // Or your app name
+  actions: [
+    IconButton(
+      icon: Icon(Icons.notifications),
+      onPressed: () => _showNotifications(),
+      tooltip: 'Help',
+    ),
+    IconButton(
+      icon: Icon(Icons.help_outline),
+      onPressed: () => _showHelp(),
+      tooltip: 'Help',
+    ),
+    IconButton(
+      icon: Icon(Icons.logout),
+      onPressed: _confirmSignOut,
+      tooltip: 'Sign Out',
+    ),
+  ],
+)
+    : null,
+  body: IndexedStack(
+    index: _currentIndex,
+    children: _pages,
+  ),
+  bottomNavigationBar: Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          spreadRadius: 2,
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.blue.shade800,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed, // Ensures all labels are shown
-        items: const <BottomNavigationBarItem>[
+        backgroundColor: _isDarkMode ? Colors.grey[900] : Colors.white,
+        selectedItemColor: _isDarkMode ? Colors.blue.shade200 : Colors.blue.shade800,
+        unselectedItemColor: _isDarkMode ? Colors.grey[500] : Colors.grey[600],
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        showSelectedLabels: true,
+        showUnselectedLabels: false, // More modern with just selected labels visible
+        selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: _currentIndex == 0 
+                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
+                  : Colors.transparent,
+              ),
+              child: Icon(
+                _currentIndex == 0 ? Icons.home_filled : Icons.home_outlined,
+                size: 24,
+              ),
+            ),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Account',
+            icon: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: _currentIndex == 1 
+                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
+                  : Colors.transparent,
+              ),
+              child: Icon(
+                _currentIndex == 1 ? Icons.person : Icons.person_outline,
+                size: 24,
+              ),
+            ),
+            label: 'Profile',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
+            icon: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: _currentIndex == 2 
+                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
+                  : Colors.transparent,
+              ),
+              child: Icon(
+                _currentIndex == 2 ? Icons.calendar_today : Icons.calendar_today_outlined,
+                size: 24,
+              ),
+            ),
             label: 'Calendar',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school),
+            icon: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: _currentIndex == 3 
+                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
+                  : Colors.transparent,
+              ),
+              child: Icon(
+                _currentIndex == 3 ? Icons.school : Icons.school_outlined,
+                size: 24,
+              ),
+            ),
             label: 'Tutors',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Container(
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: _currentIndex == 4 
+                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
+                  : Colors.transparent,
+              ),
+              child: Icon(
+                _currentIndex == 4 ? Icons.settings : Icons.settings_outlined,
+                size: 24,
+              ),
+            ),
             label: 'Settings',
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
+
+    
   }
 }

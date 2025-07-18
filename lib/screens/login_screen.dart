@@ -12,6 +12,7 @@ import 'package:lottie/lottie.dart';
 import '../main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/gradient_background.dart';
+import 'login_splash_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -54,41 +55,58 @@ class _LoginScreenState extends State<LoginScreen> {
   }
  
 
-  Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter an email address and a password')),
-      );
-      return;
-    }
+Future<void> _login() async {
+  if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please enter email and password')),
+    );
+    return;
+  }
 
-    setState(() => _isLoading = true);
-    try {
-      final user = await _authService.signIn(
+  setState(() => _isLoading = true);
+
+  try {
+    // Show splash screen (don't replace yet)
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => LoginSplashScreen()),
+    );
+
+    // Wait for both minimum splash time and login
+    final results = await Future.wait([
+      Future.delayed(Duration(seconds: 3)), // Minimum 2 seconds
+      _authService.signIn(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-      );
+      ),
+    ]);
 
-      if (user != null) {
-      Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-      builder: (_) => HomeScreen( ),
-    ),
-  );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: Invalid credentials')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login error: ${e.toString()}')),
+    final user = results[1] as User?;
+    
+    if (user != null) {
+      await _firestoreService.getUser(user.uid);
+      
+      // COMPLETELY clear navigation stack and go to home
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+        (route) => false, // Remove all previous routes
       );
-    } finally {
-      setState(() => _isLoading = false);
+    } else {
+      Navigator.pop(context); // Go back to login screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: Invalid credentials')),
+      );
     }
+  } catch (e) {
+    Navigator.pop(context); // Go back to login screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Login error: ${e.toString()}')),
+    );
+  } finally {
+    setState(() => _isLoading = false);
   }
+}
 
    Future<void> _loadCurrentTheme() async {
     final prefs = await SharedPreferences.getInstance();
@@ -99,9 +117,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _socialLogin(Future<User?> Function() socialLoginFunction) async {
   setState(() => _isLoading = true);
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => LoginSplashScreen()),
+  );
+
   try {
     final user = await socialLoginFunction();
     if (user != null) {
+    final userData = await _firestoreService.getUser(user.uid);
     Navigator.pushReplacement(
     context,
     MaterialPageRoute(
@@ -109,11 +134,13 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
   );
 }else {
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed. Please try again.')),
       );
     }
   } catch (e) {
+    Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error: ${e.toString()}')),
     );

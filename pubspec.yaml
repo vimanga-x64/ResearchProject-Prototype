@@ -46,6 +46,8 @@ dependencies:
   lottie: ^3.1.0
   shared_preferences: ^2.2.2 
   table_calendar: ^3.0.9
+  countup: ^0.1.4
+  
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +89,7 @@ flutter:
     - assets/tutor3.jpg
     - assets/animations/success.json
     - assets/animations/error.json
+    - assets/animations/wave_animation.json
     
 
   # The following line ensures that the Material Icons font is
