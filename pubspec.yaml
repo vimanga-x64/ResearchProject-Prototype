@@ -91,6 +91,7 @@ flutter:
     - assets/animations/success.json
     - assets/animations/error.json
     - assets/animations/wave_animation.json
+    - assets/animations/fire.json
     
 
   # The following line ensures that the Material Icons font is

@@ -17,6 +17,7 @@ import '../services/firestore_service.dart';
 import 'package:countup/countup.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:math';
 
 
 class UserAccountScreen extends StatelessWidget {
@@ -602,6 +603,11 @@ Future<void> _loadUserData() async {
     final userData = await _firestoreService.getUser(user.uid);
     setState(() {
       _totalScore = userData?.score ?? 75; // Default to 75 if no score exists
+      _userData = {
+        'score': _totalScore,
+        'highestStreak': userData?.highestStreak ?? 0,
+        'displayName': user.displayName,
+      };
       emotion = getAvatarEmotion(_totalScore);
       _isLoading = false;
     });
@@ -658,26 +664,44 @@ void _showHelp() {
 void _navigateToLesson(String subject) async {
   final lesson = Lesson.createSampleLesson(subject);
   
-  final int? lessonScore = await Navigator.push<int>(
+  final dynamic lessonResult = await Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => LessonScreen(lesson: lesson)),
   );
 
-  if (lessonScore != null && mounted) {
+  if (lessonResult != null && mounted) {
+    // Safely extract values
+    final int scoreGained = (lessonResult['score'] as num).toInt();
+    final int lessonHighestStreak = (lessonResult['highestStreak'] as num).toInt();
+    final int newTotalScore = _totalScore + scoreGained;
+    final int currentHighestStreak = _userData?['highestStreak'] ?? 0;
+    final int newHighestStreak = max(currentHighestStreak, lessonHighestStreak);
+
     setState(() {
-      _totalScore += lessonScore;
+      _totalScore = newTotalScore;
+      _userData?['highestStreak'] = newHighestStreak;
       emotion = getAvatarEmotion(_totalScore);
     });
-    await _authService.updateUserScore(_totalScore);
+
+    // Single Firestore update call
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _firestoreService.updateUserData(
+        user.uid,
+        score: newTotalScore,
+        highestStreak: newHighestStreak,
+      );
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Lesson "$subject" completed! You gained: $lessonScore points.'),
+        content: Text('Lesson completed! Gained $scoreGained points. '
+                     'Current streak: $lessonHighestStreak'),
         duration: Duration(seconds: 3),
       ),
     );
   }
 }
-
   Widget _buildScoreIndicator() {
     Color scoreColor;
     if (_totalScore >= 80) {
@@ -897,6 +921,33 @@ Widget _buildLessonCard(String subject, String animationPath, Color baseColor) {
   elevation: 0,
   title: Text('App_Prototype'), // Or your app name
   actions: [
+    if ((_userData?['highestStreak'] ?? 0) > 0)
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Tooltip(
+              message: 'Your personal best streak: ${_userData?['highestStreak']}',
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade700.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.emoji_events, 
+                        color: Colors.amber.shade200, size: 18),
+                    SizedBox(width: 4),
+                    Text(
+                      '${_userData?['highestStreak']}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
     IconButton(
       icon: Icon(Icons.notifications),
       onPressed: () => _showNotifications(),

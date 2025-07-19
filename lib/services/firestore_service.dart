@@ -25,12 +25,36 @@ class FirestoreService {
         'email': user.email,
         'displayName': user.displayName,
         'score': user.score,
+        'highestStreak': user.highestStreak, 
         'createdAt': user.createdAt,
       });
     } catch (e) {
       print(e.toString());
     }
   }
+
+  Future<void> updateUserData(String uid, {int? score, int? highestStreak}) async {
+  try {
+    final Map<String, dynamic> updateData = {
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+    
+    if (score != null) {
+      updateData['score'] = score;
+    }
+    
+    if (highestStreak != null) {
+      updateData['highestStreak'] = highestStreak;
+    }
+
+    await _firestore.collection('users').doc(uid).update(updateData);
+  } catch (e) {
+    print('Error updating user data: $e');
+    rethrow; // Consider rethrowing or handling the error appropriately
+  }
+}
+
+  
 
   Future<void> updateUserScore(String uid, int score) async {
     try {

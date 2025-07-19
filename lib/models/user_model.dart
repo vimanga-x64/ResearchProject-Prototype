@@ -5,6 +5,7 @@ class UserModel {
   final String email;
   final String displayName;
   final int score;
+  final int highestStreak; // Add this line
   final DateTime createdAt;
 
   UserModel({
@@ -12,6 +13,7 @@ class UserModel {
     required this.email,
     required this.displayName,
     required this.score,
+    this.highestStreak = 0, // Initialize to 0
     required this.createdAt,
   });
 
@@ -21,6 +23,7 @@ class UserModel {
       email: map['email'],
       displayName: map['displayName'],
       score: map['score'] ?? 0,
+      highestStreak: map['highestStreak'] ?? 0, // Add this line
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }
@@ -31,6 +34,7 @@ class UserModel {
       'email': email,
       'displayName': displayName,
       'score': score,
+      'highestStreak': highestStreak, // Add this line
       'createdAt': createdAt,
     };
   }

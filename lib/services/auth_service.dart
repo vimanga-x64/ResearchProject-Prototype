@@ -77,31 +77,32 @@ class AuthService {
     }
   } 
 
- Future<User?> register(String email, String password, String name) async {
-  try {
-    UserCredential authResult = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+  Future<User?> register(String email, String password, String name) async {
+    try {
+      UserCredential authResult = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    // Create user with initial score of 75
-    await _firestoreService.createUser(UserModel(
-      uid: authResult.user!.uid,
-      email: email,
-      displayName: name,
-      score: 75,  // New users start with 75 points
-      createdAt: DateTime.now(),
-    ));
+      // Create user with initial score of 75 and streak 0
+      await _firestoreService.createUser(UserModel(
+        uid: authResult.user!.uid,
+        email: email,
+        displayName: name,
+        score: 75,
+        highestStreak: 0, // Initialize to 0
+        createdAt: DateTime.now(),
+      ));
 
-    await authResult.user?.updateProfile(displayName: name);
-    await authResult.user?.reload();
+      await authResult.user?.updateProfile(displayName: name);
+      await authResult.user?.reload();
 
-    return authResult.user;
-  } catch (e) {
-    print("Registration error: $e");
-    return null;
+      return authResult.user;
+    } catch (e) {
+      print("Registration error: $e");
+      return null;
+    }
   }
-}
 
   // Get current user's data including score
   Future<UserModel?> getCurrentUserData() async {

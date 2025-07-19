@@ -54,6 +54,7 @@ class _SplashScreenState extends State<LoginSplashScreen> {
               'assets/animations/wave_animation.json',
               width: 300,
               height: 200,
+              repeat: false,
             ),
             SizedBox(height: 30),
             CircularProgressIndicator(

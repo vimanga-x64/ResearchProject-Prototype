@@ -25,20 +25,24 @@ class _LessonScreenState extends State<LessonScreen> {
   bool _isCurrentAnswerCorrect = false;
   bool _showFeedbackAnimation = false;
   late ConfettiController _confettiController;
+  
+  // Streak related variables
+  int _currentStreak = 0;
+  int _highestStreak = 0;
+  bool _showStreakAnimation = false;
 
-@override
-void initState() {
-  super.initState();
-  _confettiController = ConfettiController(duration: const Duration(seconds: 1));
-  _updateProgress();
-}
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _updateProgress();
+  }
 
-@override
-void dispose() {
-  _confettiController.dispose();
-  super.dispose();
-}
-
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
   void _updateProgress() {
     setState(() {
@@ -46,30 +50,42 @@ void dispose() {
     });
   }
 
-void _submitAnswer() async {
-  if (_selectedAnswerIndex == null) return;
+  void _submitAnswer() async {
+    if (_selectedAnswerIndex == null) return;
 
-  final currentQuestion = widget.lesson.questions[_currentQuestionIndex];
-  _isCurrentAnswerCorrect = _selectedAnswerIndex == currentQuestion.correctIndex;
+    final currentQuestion = widget.lesson.questions[_currentQuestionIndex];
+    _isCurrentAnswerCorrect = _selectedAnswerIndex == currentQuestion.correctIndex;
 
+    setState(() {
+      _showResult = true;
+      _showFeedbackAnimation = true;
+      
+      // Update streak
+      if (_isCurrentAnswerCorrect) {
+        _currentStreak++;
+        if (_currentStreak > _highestStreak) {
+          _highestStreak = _currentStreak;
+        }
+        // Show special animation for streaks of 3 or more
+        if (_currentStreak >= 3) {
+          _showStreakAnimation = true;
+        }
+        _totalScore += currentQuestion.points;
+        _confettiController.play();
+      } else {
+        _currentStreak = 0; // Reset streak on wrong answer
+        _totalScore = (_totalScore - 10).clamp(0, double.infinity).toInt();
+      }
+    });
 
-
-  setState(() {
-    _showResult = true;
-    _showFeedbackAnimation = true;
-    if (_isCurrentAnswerCorrect) {
-      _totalScore += currentQuestion.points;
-      _confettiController.play();
-    } else {
-      _totalScore = (_totalScore - 10).clamp(0, double.infinity).toInt();
+    await Future.delayed(Duration(milliseconds: 1500));
+    if (mounted) {
+      setState(() {
+        _showFeedbackAnimation = false;
+        _showStreakAnimation = false;
+      });
     }
-  });
-
-  await Future.delayed(Duration(milliseconds: 1500));
-  if (mounted) {
-    setState(() => _showFeedbackAnimation = false);
   }
-}
 
   void _moveToNextQuestion() {
     if (_currentQuestionIndex < widget.lesson.questions.length - 1) {
@@ -80,7 +96,10 @@ void _submitAnswer() async {
         _updateProgress();
       });
     } else {
-      Navigator.pop(context, _totalScore);
+      Navigator.pop(context, {
+        'score': _totalScore,
+        'highestStreak': _highestStreak,
+      });
     }
   }
 
@@ -102,14 +121,49 @@ void _submitAnswer() async {
             actions: [
               Padding(
                 padding: EdgeInsets.only(right: 16),
-                child: Center(
-                  child: Chip(
-                    label: Text(
-                      '$_totalScore pts',
-                      style: TextStyle(color: Colors.white),
+                child: Row(
+                  children: [
+                    // Streak counter
+                    if (_currentStreak > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Tooltip(
+                          message: 'Current streak: $_currentStreak\nHighest streak: $_highestStreak',
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _currentStreak >= 3 
+                                  ? Colors.orange.shade700 
+                                  : Colors.blue.shade600,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.local_fire_department, 
+                                    color: Colors.white, size: 18),
+                                SizedBox(width: 4),
+                                Text(
+                                  '$_currentStreak',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Points counter
+                    Center(
+                      child: Chip(
+                        label: Text(
+                          '$_totalScore pts',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.blue.shade600,
+                      ),
                     ),
-                    backgroundColor: Colors.blue.shade600,
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -119,44 +173,56 @@ void _submitAnswer() async {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Avatar/Feedback Circle
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                      border: Border.all(
-                        color: _showFeedbackAnimation
-                            ? _isCurrentAnswerCorrect
-                                ? Colors.green.shade300
-                                : Colors.red.shade300
-                            : Colors.blue.shade200,
-                        width: 3,
-                      ),
-                    ),
-                    child: _showFeedbackAnimation
-                        ? ClipOval(
-                            child: Lottie.asset(
-                              _isCurrentAnswerCorrect
-                                  ? 'assets/animations/success.json'
-                                  : 'assets/animations/error.json',
-                              width: 120,
-                              height: 120,
-                              repeat: false,
-                              fit: BoxFit.cover,
+                  // Avatar/Feedback Circle with streak animation
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              spreadRadius: 2,
                             ),
-                          )
-                        : AvatarWidget(
-                            emotion: "neutral", // Always show neutral avatar
-                            size: 110,
+                          ],
+                          border: Border.all(
+                            color: _showFeedbackAnimation
+                                ? _isCurrentAnswerCorrect
+                                    ? Colors.green.shade300
+                                    : Colors.red.shade300
+                                : Colors.blue.shade200,
+                            width: 3,
                           ),
+                        ),
+                        child: _showFeedbackAnimation
+                            ? ClipOval(
+                                child: Lottie.asset(
+                                  _isCurrentAnswerCorrect
+                                      ? 'assets/animations/success.json'
+                                      : 'assets/animations/error.json',
+                                  width: 120,
+                                  height: 120,
+                                  repeat: false,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : AvatarWidget(
+                                emotion: "neutral", // Always show neutral avatar
+                                size: 110,
+                              ),
+                      ),
+                      if (_showStreakAnimation)
+                        Lottie.asset(
+                          'assets/animations/fire.json',
+                          width: 160,
+                          height: 160,
+                          repeat: false,
+                        ),
+                    ],
                   ),
                   SizedBox(height: 20),
 
