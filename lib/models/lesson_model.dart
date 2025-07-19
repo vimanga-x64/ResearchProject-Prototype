@@ -4,11 +4,15 @@ class Question {
   final List<String> options;
   final int correctIndex;
   final int points;
+  final String? imageUrl;  
+  final String? explanation;  
 
   Question({
     required this.questionText,
     required this.options,
     required this.correctIndex,
+    this.imageUrl,  
+    this.explanation, 
     this.points = 10, // Default points for each question
   });
 }
@@ -35,6 +39,7 @@ class Lesson {
             questionText: 'What is 2 + 2?',
             options: ['3', '4', '5', '6'],
             correctIndex: 1,
+            //explanation: 'The sum of 2 and 2 is 4.',
           ),
           Question(
             questionText: 'What is 5 × 3?',

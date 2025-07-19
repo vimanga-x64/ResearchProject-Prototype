@@ -16,6 +16,7 @@ import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'package:countup/countup.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 
 
 class UserAccountScreen extends StatelessWidget {
@@ -480,7 +481,7 @@ return Container(
           _isDarkMode ? Colors.grey.shade900 : Colors.white,
           Colors.transparent,
         ],
-        stops: [0.0, 0.5, 0.5], // This creates a hard stop at 50%
+        stops: [0.0, 0.7, 1.0], // This creates a hard stop at 50%
       ),
     ),
     child: SafeArea(
@@ -918,115 +919,62 @@ Widget _buildLessonCard(String subject, String animationPath, Color baseColor) {
     index: _currentIndex,
     children: _pages,
   ),
-  bottomNavigationBar: Container(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          spreadRadius: 2,
+bottomNavigationBar: Container(
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 10,
+        spreadRadius: 2,
+      ),
+    ],
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    child: BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: _onItemTapped,
+      backgroundColor: _isDarkMode ? Colors.grey[900] : Colors.white,
+      //backgroundColor: Colors.transparent,
+      selectedItemColor: _isDarkMode ? Colors.blue.shade200 : Colors.blue.shade800,
+      unselectedItemColor: _isDarkMode ? Colors.grey[500] : Colors.grey[600],
+      elevation: 10,
+      type: BottomNavigationBarType.fixed,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontSize: 12),
+      items: [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined, size: 24),
+          activeIcon: Icon(Icons.home_rounded, size: 26),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle_outlined, size: 24),
+          activeIcon: Icon(Icons.account_circle_rounded, size: 26),
+          label: 'Profile',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today_outlined, size: 24),
+          activeIcon: Icon(Icons.calendar_today_rounded, size: 26),
+          label: 'Calendar',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people_outlined, size: 24),
+          activeIcon: Icon(Icons.people_rounded, size: 26),
+          label: 'Tutors',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.settings_outlined, size: 24),
+          activeIcon: Icon(Icons.settings_rounded, size: 26),
+          label: 'Settings',
         ),
       ],
     ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      child: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onItemTapped,
-        backgroundColor: _isDarkMode ? Colors.grey[900] : Colors.white,
-        selectedItemColor: _isDarkMode ? Colors.blue.shade200 : Colors.blue.shade800,
-        unselectedItemColor: _isDarkMode ? Colors.grey[500] : Colors.grey[600],
-        elevation: 0,
-        type: BottomNavigationBarType.fixed,
-        showSelectedLabels: true,
-        showUnselectedLabels: false, // More modern with just selected labels visible
-        selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        items: [
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _currentIndex == 0 
-                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
-                  : Colors.transparent,
-              ),
-              child: Icon(
-                _currentIndex == 0 ? Icons.home_filled : Icons.home_outlined,
-                size: 24,
-              ),
-            ),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _currentIndex == 1 
-                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
-                  : Colors.transparent,
-              ),
-              child: Icon(
-                _currentIndex == 1 ? Icons.person : Icons.person_outline,
-                size: 24,
-              ),
-            ),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _currentIndex == 2 
-                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
-                  : Colors.transparent,
-              ),
-              child: Icon(
-                _currentIndex == 2 ? Icons.calendar_today : Icons.calendar_today_outlined,
-                size: 24,
-              ),
-            ),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _currentIndex == 3 
-                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
-                  : Colors.transparent,
-              ),
-              child: Icon(
-                _currentIndex == 3 ? Icons.school : Icons.school_outlined,
-                size: 24,
-              ),
-            ),
-            label: 'Tutors',
-          ),
-          BottomNavigationBarItem(
-            icon: Container(
-              padding: EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _currentIndex == 4 
-                  ? (_isDarkMode ? Colors.blue.shade800.withOpacity(0.2) : Colors.blue.shade100)
-                  : Colors.transparent,
-              ),
-              child: Icon(
-                _currentIndex == 4 ? Icons.settings : Icons.settings_outlined,
-                size: 24,
-              ),
-            ),
-            label: 'Settings',
-          ),
-        ],
-      ),
-    ),
   ),
+),
 );
 
     
